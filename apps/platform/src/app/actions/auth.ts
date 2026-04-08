@@ -1,9 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export async function login(formData: FormData) {
+export async function login(_prevState: unknown, formData: FormData) {
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -12,13 +13,14 @@ export async function login(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    return { error: error.message };
   }
 
+  revalidatePath("/dashboard", "layout");
   redirect("/dashboard");
 }
 
-export async function signup(formData: FormData) {
+export async function signup(_prevState: unknown, formData: FormData) {
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signUp({
@@ -32,10 +34,10 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+    return { error: error.message };
   }
 
-  redirect("/login?message=Check your email to confirm your account");
+  return { success: "Check your email to confirm your account" };
 }
 
 export async function signOut() {

@@ -1,12 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useActionState } from "react";
 import { login } from "@/app/actions/auth";
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string; message?: string }>;
-}) {
-  const { error, message } = await searchParams;
+export default function LoginPage() {
+  const [state, formAction, pending] = useActionState(login, null);
 
   return (
     <div className="flex flex-1 items-center justify-center px-6">
@@ -18,19 +17,13 @@ export default async function LoginPage({
           </p>
         </div>
 
-        {error && (
+        {state?.error && (
           <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-            {error}
+            {state.error}
           </div>
         )}
 
-        {message && (
-          <div className="rounded-md bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950 dark:text-green-300">
-            {message}
-          </div>
-        )}
-
-        <form action={login} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div className="space-y-2">
             <label
               htmlFor="email"
@@ -67,9 +60,10 @@ export default async function LoginPage({
 
           <button
             type="submit"
-            className="flex h-10 w-full items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-colors hover:opacity-90"
+            disabled={pending}
+            className="flex h-10 w-full items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-colors hover:opacity-90 disabled:opacity-50"
           >
-            Sign in
+            {pending ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
