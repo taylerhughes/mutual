@@ -36,3 +36,48 @@ export type Stake = {
   joined_at: string;
   relinquished_at: string | null;
 };
+
+export type ProposalType = "flag_test" | "branch_test" | "governance_vote";
+
+export type ProposalStatus =
+  | "discussion"
+  | "voting"
+  | "approved"
+  | "rejected"
+  | "building"
+  | "deployed"
+  | "merged"
+  | "rolled_back";
+
+export type Proposal = {
+  id: string;
+  community_id: string;
+  author_id: string;
+  title: string;
+  description: string;
+  proposal_type: ProposalType;
+  status: ProposalStatus;
+  voting_deadline: string | null;
+  approval_threshold: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VoteSignal = "approve" | "reject";
+
+export type Vote = {
+  id: string;
+  proposal_id: string;
+  member_id: string;
+  signal: VoteSignal;
+  created_at: string;
+};
+
+export type Comment = {
+  id: string;
+  proposal_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+};
