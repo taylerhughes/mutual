@@ -54,6 +54,18 @@ export default async function CommunityPage({
     currency: community.currency,
   }).format(community.entry_stake_amount / 100);
 
+  // Fetch recent proposals (for members only)
+  let recentProposals: { id: string; title: string; status: string }[] = [];
+  if (existingStake) {
+    const { data } = await supabase
+      .from("proposals")
+      .select("id, title, status")
+      .eq("community_id", community.id)
+      .order("created_at", { ascending: false })
+      .limit(5);
+    recentProposals = data ?? [];
+  }
+
   const purchaseStakeWithId = purchaseStake.bind(null, community.id);
 
   return (
@@ -111,14 +123,24 @@ export default async function CommunityPage({
 
         <div className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
           {existingStake ? (
-            <div className="space-y-2 text-center">
+            <div className="space-y-4 text-center">
               <p className="font-medium text-green-700 dark:text-green-400">
                 You are a member of this community
               </p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Your stake is active. You have governance rights in this
-                community.
-              </p>
+              <div className="flex justify-center gap-3">
+                <Link
+                  href={`/communities/${slug}/proposals`}
+                  className="inline-flex h-9 items-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-colors hover:opacity-90"
+                >
+                  View proposals
+                </Link>
+                <Link
+                  href={`/communities/${slug}/proposals/new`}
+                  className="inline-flex h-9 items-center rounded-md border border-zinc-200 px-4 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                >
+                  New proposal
+                </Link>
+              </div>
             </div>
           ) : user ? (
             <div className="space-y-4 text-center">
@@ -149,6 +171,33 @@ export default async function CommunityPage({
             </div>
           )}
         </div>
+
+        {/* Recent proposals for members */}
+        {existingStake && recentProposals.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Recent proposals</h2>
+              <Link
+                href={`/communities/${slug}/proposals`}
+                className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              >
+                View all &rarr;
+              </Link>
+            </div>
+            {recentProposals.map((p) => (
+              <Link
+                key={p.id}
+                href={`/communities/${slug}/proposals/${p.id}`}
+                className="block rounded-lg border border-zinc-200 p-3 text-sm transition-colors hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
+              >
+                <span className="font-medium">{p.title}</span>
+                <span className="ml-2 text-xs text-zinc-500 capitalize">
+                  {p.status.replace("_", " ")}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
