@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions/auth";
@@ -25,7 +26,17 @@ export default async function DashboardLayout({
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex h-14 items-center justify-between border-b border-zinc-200 px-6 dark:border-zinc-800">
-        <span className="text-sm font-semibold">Mutual</span>
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="text-sm font-semibold">Mutual</Link>
+          <nav className="flex items-center gap-4">
+            <Link href="/dashboard" className="text-sm text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+              Dashboard
+            </Link>
+            <Link href="/propose" className="text-sm text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+              Propose
+            </Link>
+          </nav>
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-zinc-600 dark:text-zinc-400">
             {profile?.display_name ?? user.email}

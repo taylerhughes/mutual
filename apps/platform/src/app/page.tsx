@@ -8,7 +8,7 @@ export default function Home() {
         <p className="text-lg text-zinc-600 dark:text-zinc-400">
           Software is infrastructure. Own it. Govern it. Together.
         </p>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           <Link
             href="/login"
             className="rounded-lg bg-foreground px-6 py-3 text-sm font-medium text-background transition-colors hover:opacity-90"
@@ -20,6 +20,12 @@ export default function Home() {
             className="rounded-lg border border-zinc-200 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
           >
             Get started
+          </Link>
+          <Link
+            href="/propose"
+            className="rounded-lg border border-zinc-200 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+          >
+            Propose software
           </Link>
         </div>
       </main>

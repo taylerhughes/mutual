@@ -20,6 +20,7 @@ export type Community = {
   voting_model: "flat" | "contribution_weighted" | "quadratic";
   entry_stake_amount: number;
   currency: string;
+  cosigner_threshold: number;
   status: "proposed" | "active" | "wound_down";
   created_at: string;
   updated_at: string;
@@ -80,4 +81,11 @@ export type Comment = {
   body: string;
   created_at: string;
   updated_at: string;
+};
+
+export type CoSignature = {
+  id: string;
+  community_id: string;
+  user_id: string;
+  created_at: string;
 };
