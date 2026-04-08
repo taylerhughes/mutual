@@ -13,8 +13,14 @@ export async function createClient() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          for (const { name, value, options } of cookiesToSet) {
-            cookieStore.set(name, value, options);
+          try {
+            for (const { name, value, options } of cookiesToSet) {
+              cookieStore.set(name, value, options);
+            }
+          } catch {
+            // setAll is called from Server Components where cookies are
+            // read-only. The middleware handles session refresh, so this
+            // is safe to ignore.
           }
         },
       },
