@@ -31,6 +31,7 @@ export type Stake = {
   community_id: string;
   amount: number;
   stripe_payment_intent_id: string | null;
+  stripe_checkout_session_id: string | null;
   status: "pending" | "active" | "relinquished";
   joined_at: string;
   relinquished_at: string | null;
