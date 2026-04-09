@@ -18,6 +18,15 @@ export async function createProposal(communitySlug: string, formData: FormData) 
   const description = formData.get("description") as string;
   const proposalType = (formData.get("proposal_type") as ProposalType) || "flag_test";
 
+  // Check member count — solo creators get auto-approval
+  const { count: memberCount } = await supabase
+    .from("stakes")
+    .select("id", { count: "exact", head: true })
+    .eq("community_id", communityId)
+    .eq("status", "active");
+
+  const autoApprove = memberCount === 1;
+
   const { data: proposal, error } = await supabase
     .from("proposals")
     .insert({
@@ -26,6 +35,7 @@ export async function createProposal(communitySlug: string, formData: FormData) 
       title,
       description,
       proposal_type: proposalType,
+      status: autoApprove ? "approved" : "discussion",
     })
     .select("id")
     .single();
@@ -46,7 +56,6 @@ export async function moveToVoting(proposalId: string, communitySlug: string) {
 
   if (!user) redirect("/login");
 
-  // Set voting deadline to 7 days from now
   const deadline = new Date();
   deadline.setDate(deadline.getDate() + 7);
 
@@ -87,7 +96,6 @@ export async function castVote(
     signal,
   });
 
-  // Check if threshold is reached
   await checkAndResolveVote(proposalId, communitySlug);
 
   revalidatePath(`/communities/${communitySlug}/proposals/${proposalId}`);
@@ -98,7 +106,7 @@ async function checkAndResolveVote(proposalId: string, communitySlug: string) {
 
   const { data: proposal } = await supabase
     .from("proposals")
-    .select("id, community_id, approval_threshold, status")
+    .select("id, community_id, status")
     .eq("id", proposalId)
     .single();
 
@@ -119,20 +127,16 @@ async function checkAndResolveVote(proposalId: string, communitySlug: string) {
 
   const approvals = votes.filter((v) => v.signal === "approve").length;
   const rejections = votes.filter((v) => v.signal === "reject").length;
-  const totalVotes = votes.length;
 
-  // Need at least a majority of members to have voted (quorum)
-  const quorum = Math.ceil(totalMembers / 2);
-  if (totalVotes < quorum) return;
+  // Simple majority: more than half of all members
+  const majority = Math.floor(totalMembers / 2) + 1;
 
-  const approvalPercent = Math.round((approvals / totalVotes) * 100);
-
-  if (approvalPercent >= proposal.approval_threshold) {
+  if (approvals >= majority) {
     await supabase
       .from("proposals")
       .update({ status: "approved" })
       .eq("id", proposalId);
-  } else if (rejections >= Math.ceil(totalMembers / 2)) {
+  } else if (rejections >= majority) {
     await supabase
       .from("proposals")
       .update({ status: "rejected" })

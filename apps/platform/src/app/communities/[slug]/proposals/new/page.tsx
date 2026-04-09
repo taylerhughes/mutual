@@ -38,6 +38,15 @@ export default async function NewProposalPage({
     redirect(`/communities/${slug}?error=You+must+be+a+member+to+create+proposals`);
   }
 
+  // Check member count for auto-approve messaging
+  const { count: memberCount } = await supabase
+    .from("stakes")
+    .select("id", { count: "exact", head: true })
+    .eq("community_id", community.id)
+    .eq("status", "active");
+
+  const isSolo = memberCount === 1;
+
   const createProposalForCommunity = createProposal.bind(null, slug);
 
   return (
@@ -52,8 +61,9 @@ export default async function NewProposalPage({
           </Link>
           <h1 className="text-2xl font-bold tracking-tight">New proposal</h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Propose a change to {community.name}. Your proposal will start in
-            the discussion phase for community deliberation.
+            {isSolo
+              ? `As the sole member, your proposal will be approved immediately.`
+              : `Propose a change to ${community.name}. Your proposal will start in the discussion phase for community deliberation.`}
           </p>
         </div>
 
