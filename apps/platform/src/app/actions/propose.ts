@@ -54,7 +54,7 @@ export async function createSoftware(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
-  redirect(`/communities/${community.slug}`);
+  redirect(`/communities/${community.slug}/build`);
 }
 
 export async function publishSoftware(communityId: string, communitySlug: string) {

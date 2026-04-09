@@ -93,3 +93,16 @@ export type Invite = {
   created_at: string;
   accepted_at: string | null;
 };
+
+export type TicketStatus = "todo" | "in_progress" | "done";
+
+export type Ticket = {
+  id: string;
+  community_id: string;
+  title: string;
+  description: string;
+  status: TicketStatus;
+  position: number;
+  created_at: string;
+  updated_at: string;
+};
