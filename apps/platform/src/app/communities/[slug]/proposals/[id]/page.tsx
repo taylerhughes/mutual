@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { moveToVoting, castVote, addComment } from "@/app/actions/proposals";
+import { SubmitButton } from "@/components/submit-button";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   discussion: { label: "Discussion", color: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
@@ -191,12 +192,12 @@ export default async function ProposalDetailPage({
           {/* Vote actions */}
           {isDiscussion && isAuthor && (
             <form action={moveToVotingBound}>
-              <button
-                type="submit"
-                className="inline-flex h-9 items-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+              <SubmitButton
+                pendingText="Opening vote..."
+                className="inline-flex h-9 items-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
               >
                 Move to voting
-              </button>
+              </SubmitButton>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 This will open a 7-day voting period for all community members.
               </p>
@@ -216,28 +217,26 @@ export default async function ProposalDetailPage({
               )}
               <div className="flex gap-3">
                 <form action={castApproveBound}>
-                  <button
-                    type="submit"
-                    className={`inline-flex h-9 items-center rounded-md px-4 text-sm font-medium transition-colors ${
+                  <SubmitButton
+                    className={`inline-flex h-9 items-center rounded-md px-4 text-sm font-medium transition-colors disabled:opacity-50 ${
                       userVote?.signal === "approve"
                         ? "bg-green-600 text-white"
                         : "border border-green-600 text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
                     }`}
                   >
                     Approve
-                  </button>
+                  </SubmitButton>
                 </form>
                 <form action={castRejectBound}>
-                  <button
-                    type="submit"
-                    className={`inline-flex h-9 items-center rounded-md px-4 text-sm font-medium transition-colors ${
+                  <SubmitButton
+                    className={`inline-flex h-9 items-center rounded-md px-4 text-sm font-medium transition-colors disabled:opacity-50 ${
                       userVote?.signal === "reject"
                         ? "bg-red-600 text-white"
                         : "border border-red-600 text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
                     }`}
                   >
                     Reject
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
 
@@ -306,12 +305,12 @@ export default async function ProposalDetailPage({
               placeholder="Share your thoughts on this proposal..."
               className="flex w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-500 dark:focus:ring-zinc-100"
             />
-            <button
-              type="submit"
-              className="inline-flex h-9 items-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-colors hover:opacity-90"
+            <SubmitButton
+              pendingText="Adding..."
+              className="inline-flex h-9 items-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-colors hover:opacity-90 disabled:opacity-50"
             >
               Add comment
-            </button>
+            </SubmitButton>
           </form>
         </section>
       </div>

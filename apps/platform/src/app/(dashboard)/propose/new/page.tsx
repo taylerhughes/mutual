@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createSoftware } from "@/app/actions/propose";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function CreateSoftwarePage({
   searchParams,
@@ -66,12 +67,12 @@ export default async function CreateSoftwarePage({
           </div>
 
           <div className="flex gap-3">
-            <button
-              type="submit"
-              className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-colors hover:opacity-90"
+            <SubmitButton
+              pendingText="Creating..."
+              className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-colors hover:opacity-90 disabled:opacity-50"
             >
               Create
-            </button>
+            </SubmitButton>
             <Link
               href="/dashboard"
               className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-200 px-6 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"

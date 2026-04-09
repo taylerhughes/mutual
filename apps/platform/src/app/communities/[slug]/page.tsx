@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { purchaseStake } from "@/app/actions/stakes";
 import { InviteButton } from "@/components/invite-button";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function CommunityPage({
   params,
@@ -151,12 +152,12 @@ export default async function CommunityPage({
                 Your stake persists indefinitely and confers voting rights.
               </p>
               <form action={purchaseStakeWithId}>
-                <button
-                  type="submit"
-                  className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-colors hover:opacity-90"
+                <SubmitButton
+                  pendingText="Redirecting to checkout..."
+                  className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-colors hover:opacity-90 disabled:opacity-50"
                 >
                   Acquire stake &mdash; {formattedPrice}
-                </button>
+                </SubmitButton>
               </form>
             </div>
           ) : (
