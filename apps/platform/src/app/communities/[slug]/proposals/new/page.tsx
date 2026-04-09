@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createProposal } from "@/app/actions/proposals";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function NewProposalPage({
   params,
@@ -136,12 +137,12 @@ export default async function NewProposalPage({
           </div>
 
           <div className="flex gap-3">
-            <button
-              type="submit"
-              className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-colors hover:opacity-90"
+            <SubmitButton
+              pendingText="Submitting..."
+              className="inline-flex h-10 items-center justify-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-colors hover:opacity-90 disabled:opacity-50"
             >
               Submit proposal
-            </button>
+            </SubmitButton>
             <Link
               href={`/communities/${slug}/proposals`}
               className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-200 px-6 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
