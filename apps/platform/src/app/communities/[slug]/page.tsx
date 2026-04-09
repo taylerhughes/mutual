@@ -164,8 +164,14 @@ export default async function CommunityPage({
               )}
               <div className="flex flex-wrap justify-center gap-3">
                 <Link
-                  href={`/communities/${slug}/proposals`}
+                  href={`/communities/${slug}/build`}
                   className="inline-flex h-9 items-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-colors hover:opacity-90"
+                >
+                  Build
+                </Link>
+                <Link
+                  href={`/communities/${slug}/proposals`}
+                  className="inline-flex h-9 items-center rounded-md border border-zinc-200 px-4 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
                 >
                   View proposals
                 </Link>
