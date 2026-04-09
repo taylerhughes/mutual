@@ -41,41 +41,29 @@ export default async function DashboardPage() {
     (c) => !memberCommunityIds.has(c.id),
   );
 
-  // Fetch user's proposed communities
-  const { data: myProposals } = await supabase
-    .from("communities")
-    .select("id, name, slug, cosigner_threshold")
-    .eq("founding_member_id", user!.id)
-    .eq("status", "proposed")
-    .order("created_at", { ascending: false });
-
-  // Get co-sign counts for user's proposals
-  const proposalCosignCounts = new Map<string, number>();
-  if (myProposals && myProposals.length > 0) {
-    for (const p of myProposals) {
-      const { count } = await supabase
-        .from("co_signatures")
-        .select("id", { count: "exact", head: true })
-        .eq("community_id", p.id);
-      proposalCosignCounts.set(p.id, count ?? 0);
-    }
-  }
-
   return (
     <div className="flex flex-1 flex-col px-6 py-8">
       <div className="mx-auto w-full max-w-2xl space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Welcome{profile?.display_name ? `, ${profile.display_name}` : ""}
-          </h1>
-          <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-            Your communities and governance activity
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Welcome{profile?.display_name ? `, ${profile.display_name}` : ""}
+            </h1>
+            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+              Your software and governance activity
+            </p>
+          </div>
+          <Link
+            href="/propose/new"
+            className="inline-flex h-9 items-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-colors hover:opacity-90"
+          >
+            Create software
+          </Link>
         </div>
 
         {/* User's communities */}
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold">Your communities</h2>
+          <h2 className="text-lg font-semibold">Your software</h2>
           {communities && communities.length > 0 ? (
             <div className="space-y-3">
               {communities.map((community) => {
@@ -116,47 +104,11 @@ export default async function DashboardPage() {
           ) : (
             <div className="rounded-lg border border-zinc-200 p-6 text-center dark:border-zinc-800">
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                You haven&apos;t joined any communities yet.
+                You haven&apos;t created or joined any software yet.
               </p>
             </div>
           )}
         </section>
-
-        {/* User's proposed software */}
-        {myProposals && myProposals.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold">Your proposals</h2>
-            <div className="space-y-3">
-              {myProposals.map((proposal) => {
-                const count = proposalCosignCounts.get(proposal.id) ?? 0;
-                const progress = Math.min(
-                  100,
-                  Math.round((count / proposal.cosigner_threshold) * 100),
-                );
-                return (
-                  <Link
-                    key={proposal.id}
-                    href={`/propose/${proposal.slug}`}
-                    className="block rounded-lg border border-zinc-200 p-4 transition-colors hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">{proposal.name}</p>
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {count}/{proposal.cosigner_threshold} co-signers
-                      </span>
-                    </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                      <div
-                        className="h-full rounded-full bg-blue-500 transition-all"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
 
         {/* Discover communities */}
         {discoverCommunities && discoverCommunities.length > 0 && (

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { purchaseStake } from "@/app/actions/stakes";
+import { InviteButton } from "@/components/invite-button";
 
 export default async function CommunityPage({
   params,
@@ -127,7 +128,7 @@ export default async function CommunityPage({
               <p className="font-medium text-green-700 dark:text-green-400">
                 You are a member of this community
               </p>
-              <div className="flex justify-center gap-3">
+              <div className="flex flex-wrap justify-center gap-3">
                 <Link
                   href={`/communities/${slug}/proposals`}
                   className="inline-flex h-9 items-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-colors hover:opacity-90"
@@ -140,6 +141,7 @@ export default async function CommunityPage({
                 >
                   New proposal
                 </Link>
+                <InviteButton communityId={community.id} communitySlug={slug} />
               </div>
             </div>
           ) : user ? (
