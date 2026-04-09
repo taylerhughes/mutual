@@ -29,9 +29,11 @@ export async function createSoftware(formData: FormData) {
     slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
   }
 
-  // Use admin client to create community + founding stake in one operation
   const admin = createAdminClient();
 
+  // Create community in draft status — no stake yet.
+  // The founder has access via founding_member_id.
+  // They'll create a stake when they publish.
   const { data: community, error } = await admin
     .from("communities")
     .insert({
@@ -42,7 +44,7 @@ export async function createSoftware(formData: FormData) {
       voting_model: "flat",
       entry_stake_amount: 1500, // £15.00
       currency: "gbp",
-      status: "active",
+      status: "draft",
     })
     .select("id, slug")
     .single();
@@ -51,23 +53,53 @@ export async function createSoftware(formData: FormData) {
     redirect(`/propose/new?error=${encodeURIComponent(error.message)}`);
   }
 
-  // Create free trial founding stake
-  // Founder gets immediate access; trial_expires_at is set but the
-  // specific duration is a product decision (7 days, 30 days, etc.)
-  // For now, default to 30 days.
-  const trialExpiry = new Date();
-  trialExpiry.setDate(trialExpiry.getDate() + 30);
+  revalidatePath("/dashboard");
+  redirect(`/communities/${community.slug}`);
+}
 
+export async function publishSoftware(communityId: string, communitySlug: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  // Verify user is the founding member
+  const { data: community } = await supabase
+    .from("communities")
+    .select("id, founding_member_id, entry_stake_amount, status")
+    .eq("id", communityId)
+    .single();
+
+  if (!community || community.founding_member_id !== user.id) {
+    redirect(`/communities/${communitySlug}?error=Not+authorized`);
+  }
+
+  if (community.status !== "draft") {
+    redirect(`/communities/${communitySlug}`);
+  }
+
+  const admin = createAdminClient();
+
+  // Create the founding stake (paid via Stripe or free for now)
+  // For Phase 1: founding member gets their stake when they publish
   await admin.from("stakes").insert({
     member_id: user.id,
-    community_id: community.id,
-    amount: 0,
+    community_id: communityId,
+    amount: community.entry_stake_amount,
     status: "active",
     is_founding: true,
-    trial_expires_at: trialExpiry.toISOString(),
   });
+
+  // Flip community to active — now visible in directory
+  await admin
+    .from("communities")
+    .update({ status: "active" })
+    .eq("id", communityId)
+    .eq("status", "draft");
 
   revalidatePath("/dashboard");
   revalidatePath("/propose");
-  redirect(`/communities/${community.slug}`);
+  revalidatePath(`/communities/${communitySlug}`);
 }

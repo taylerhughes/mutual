@@ -13,6 +13,14 @@ export default async function DashboardPage() {
     .eq("id", user!.id)
     .single();
 
+  // Fetch user's draft communities (founder, building)
+  const { data: draftCommunities } = await supabase
+    .from("communities")
+    .select("id, name, slug, description")
+    .eq("founding_member_id", user!.id)
+    .eq("status", "draft")
+    .order("created_at", { ascending: false });
+
   // Fetch user's active stakes with community info
   const { data: stakes } = await supabase
     .from("stakes")
@@ -20,7 +28,6 @@ export default async function DashboardPage() {
     .eq("member_id", user!.id)
     .eq("status", "active");
 
-  // Fetch community details for each stake
   const communityIds = stakes?.map((s) => s.community_id) ?? [];
   const { data: communities } = communityIds.length > 0
     ? await supabase
@@ -40,6 +47,10 @@ export default async function DashboardPage() {
   const discoverCommunities = allCommunities?.filter(
     (c) => !memberCommunityIds.has(c.id),
   );
+
+  const hasAnySoftware =
+    (draftCommunities && draftCommunities.length > 0) ||
+    (communities && communities.length > 0);
 
   return (
     <div className="flex flex-1 flex-col px-6 py-8">
@@ -61,12 +72,36 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {/* User's communities */}
+        {/* User's software */}
         <section className="space-y-4">
           <h2 className="text-lg font-semibold">Your software</h2>
-          {communities && communities.length > 0 ? (
+          {hasAnySoftware ? (
             <div className="space-y-3">
-              {communities.map((community) => {
+              {/* Draft communities */}
+              {draftCommunities?.map((community) => (
+                <Link
+                  key={community.id}
+                  href={`/communities/${community.slug}`}
+                  className="block rounded-lg border border-amber-200 bg-amber-50/50 p-4 transition-colors hover:border-amber-300 dark:border-amber-800 dark:bg-amber-950/50 dark:hover:border-amber-700"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{community.name}</p>
+                      {community.description && (
+                        <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+                          {community.description}
+                        </p>
+                      )}
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+                      Draft
+                    </span>
+                  </div>
+                </Link>
+              ))}
+
+              {/* Active communities (via stakes) */}
+              {communities?.map((community) => {
                 const stake = stakes?.find(
                   (s) => s.community_id === community.id,
                 );

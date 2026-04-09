@@ -18,14 +18,25 @@ export async function createProposal(communitySlug: string, formData: FormData) 
   const description = formData.get("description") as string;
   const proposalType = (formData.get("proposal_type") as ProposalType) || "flag_test";
 
-  // Check member count — solo creators get auto-approval
-  const { count: memberCount } = await supabase
+  // Check member count — solo creators get auto-approval.
+  // For draft communities the founder has no stake, so count founding
+  // membership separately.
+  const { data: community } = await supabase
+    .from("communities")
+    .select("id, status, founding_member_id")
+    .eq("id", communityId)
+    .single();
+
+  const { count: stakeCount } = await supabase
     .from("stakes")
     .select("id", { count: "exact", head: true })
     .eq("community_id", communityId)
     .eq("status", "active");
 
-  const autoApprove = memberCount === 1;
+  const isDraft = community?.status === "draft";
+  const isFounder = community?.founding_member_id === user.id;
+  const memberCount = (stakeCount ?? 0) + (isDraft && isFounder ? 1 : 0);
+  const autoApprove = memberCount <= 1;
 
   const { data: proposal, error } = await supabase
     .from("proposals")
