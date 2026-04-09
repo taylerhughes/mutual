@@ -33,6 +33,8 @@ export type Stake = {
   stripe_payment_intent_id: string | null;
   stripe_checkout_session_id: string | null;
   status: "pending" | "active" | "relinquished";
+  is_founding: boolean;
+  trial_expires_at: string | null;
   joined_at: string;
   relinquished_at: string | null;
 };

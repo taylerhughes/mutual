@@ -51,12 +51,20 @@ export async function createSoftware(formData: FormData) {
     redirect(`/propose/new?error=${encodeURIComponent(error.message)}`);
   }
 
-  // Create founding stake (free — earned by creating the software)
+  // Create free trial founding stake
+  // Founder gets immediate access; trial_expires_at is set but the
+  // specific duration is a product decision (7 days, 30 days, etc.)
+  // For now, default to 30 days.
+  const trialExpiry = new Date();
+  trialExpiry.setDate(trialExpiry.getDate() + 30);
+
   await admin.from("stakes").insert({
     member_id: user.id,
     community_id: community.id,
-    amount: 1500,
+    amount: 0,
     status: "active",
+    is_founding: true,
+    trial_expires_at: trialExpiry.toISOString(),
   });
 
   revalidatePath("/dashboard");
