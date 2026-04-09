@@ -20,13 +20,13 @@ export default async function NewProposalPage({
 
   const { data: community } = await supabase
     .from("communities")
-    .select("id, name, slug")
+    .select("id, name, slug, founding_member_id")
     .eq("slug", slug)
     .single();
 
   if (!community) notFound();
 
-  // Verify user is a member
+  // Verify user is a member (via stake or as founding member of draft community)
   const { data: stake } = await supabase
     .from("stakes")
     .select("id")
@@ -35,18 +35,23 @@ export default async function NewProposalPage({
     .eq("status", "active")
     .maybeSingle();
 
-  if (!stake) {
+  const isFounder = user.id === community.founding_member_id;
+  const isMember = !!stake || isFounder;
+
+  if (!isMember) {
     redirect(`/communities/${slug}?error=You+must+be+a+member+to+create+proposals`);
   }
 
   // Check member count for auto-approve messaging
-  const { count: memberCount } = await supabase
+  const { count: stakeCount } = await supabase
     .from("stakes")
     .select("id", { count: "exact", head: true })
     .eq("community_id", community.id)
     .eq("status", "active");
 
-  const isSolo = memberCount === 1;
+  // Founder of a draft community counts as a member even without a stake
+  const founderExtra = isFounder && !stake ? 1 : 0;
+  const isSolo = (stakeCount ?? 0) + founderExtra <= 1;
 
   const createProposalForCommunity = createProposal.bind(null, slug);
 
