@@ -20,7 +20,7 @@ export type Community = {
   voting_model: "flat" | "contribution_weighted" | "quadratic";
   entry_stake_amount: number;
   currency: string;
-  status: "active" | "wound_down";
+  status: "draft" | "active" | "wound_down";
   created_at: string;
   updated_at: string;
 };

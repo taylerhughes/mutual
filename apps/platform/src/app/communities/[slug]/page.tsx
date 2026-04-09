@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { purchaseStake } from "@/app/actions/stakes";
+import { publishSoftware } from "@/app/actions/propose";
 import { InviteButton } from "@/components/invite-button";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -31,7 +32,15 @@ export default async function CommunityPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Check if current user already has a stake
+  const isFounder = user?.id === community.founding_member_id;
+  const isDraft = community.status === "draft";
+
+  // Draft communities are only visible to the founder
+  if (isDraft && !isFounder) {
+    notFound();
+  }
+
+  // Check if current user has a stake (for active communities)
   let existingStake = null;
   if (user) {
     const { data } = await supabase
@@ -44,12 +53,17 @@ export default async function CommunityPage({
     existingStake = data;
   }
 
-  // Count active members
-  const { count: memberCount } = await supabase
+  // Founder of a draft community is a member even without a stake
+  const isMember = !!existingStake || (isDraft && isFounder);
+
+  // Count active members (stakes) — founders of drafts don't have one yet
+  const { count: stakeCount } = await supabase
     .from("stakes")
     .select("id", { count: "exact", head: true })
     .eq("community_id", community.id)
     .eq("status", "active");
+
+  const memberCount = (stakeCount ?? 0) + (isDraft && isFounder ? 1 : 0);
 
   const formattedPrice = new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -58,7 +72,7 @@ export default async function CommunityPage({
 
   // Fetch recent proposals (for members only)
   let recentProposals: { id: string; title: string; status: string }[] = [];
-  if (existingStake) {
+  if (isMember) {
     const { data } = await supabase
       .from("proposals")
       .select("id, title, status")
@@ -69,6 +83,7 @@ export default async function CommunityPage({
   }
 
   const purchaseStakeWithId = purchaseStake.bind(null, community.id);
+  const publishBound = publishSoftware.bind(null, community.id, slug);
 
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-16">
@@ -82,6 +97,19 @@ export default async function CommunityPage({
         {cancelled && (
           <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950 dark:text-amber-300">
             Checkout was cancelled. You can try again when you&apos;re ready.
+          </div>
+        )}
+
+        {/* Draft banner */}
+        {isDraft && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              This software is in draft mode
+            </p>
+            <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+              Only you can see this. When you&apos;re ready, publish it to make
+              it visible in the directory and allow others to join.
+            </p>
           </div>
         )}
 
@@ -105,7 +133,7 @@ export default async function CommunityPage({
         <div className="grid grid-cols-3 gap-4">
           <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
             <p className="text-sm text-zinc-500 dark:text-zinc-400">Members</p>
-            <p className="text-2xl font-semibold">{memberCount ?? 0}</p>
+            <p className="text-2xl font-semibold">{memberCount}</p>
           </div>
           <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -114,21 +142,26 @@ export default async function CommunityPage({
             <p className="text-2xl font-semibold">{formattedPrice}</p>
           </div>
           <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Voting model
-            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Status</p>
             <p className="text-2xl font-semibold capitalize">
-              {community.voting_model.replace("_", " ")}
+              {community.status}
             </p>
           </div>
         </div>
 
         <div className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
-          {existingStake ? (
+          {isMember ? (
             <div className="space-y-4 text-center">
-              <p className="font-medium text-green-700 dark:text-green-400">
-                You are a member of this community
-              </p>
+              {isDraft ? (
+                <p className="font-medium text-amber-700 dark:text-amber-400">
+                  You are the founder &mdash; build your software, then publish
+                  when ready
+                </p>
+              ) : (
+                <p className="font-medium text-green-700 dark:text-green-400">
+                  You are a member of this community
+                </p>
+              )}
               <div className="flex flex-wrap justify-center gap-3">
                 <Link
                   href={`/communities/${slug}/proposals`}
@@ -142,8 +175,27 @@ export default async function CommunityPage({
                 >
                   New proposal
                 </Link>
-                <InviteButton communityId={community.id} communitySlug={slug} />
+                {!isDraft && (
+                  <InviteButton
+                    communityId={community.id}
+                    communitySlug={slug}
+                  />
+                )}
               </div>
+              {isDraft && isFounder && (
+                <form action={publishBound} className="mt-4">
+                  <SubmitButton
+                    pendingText="Publishing..."
+                    className="inline-flex h-10 items-center justify-center rounded-md bg-green-600 px-6 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                  >
+                    Publish to directory
+                  </SubmitButton>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    This will make your software visible to everyone and create
+                    your founding stake ({formattedPrice}).
+                  </p>
+                </form>
+              )}
             </div>
           ) : user ? (
             <div className="space-y-4 text-center">
@@ -176,7 +228,7 @@ export default async function CommunityPage({
         </div>
 
         {/* Recent proposals for members */}
-        {existingStake && recentProposals.length > 0 && (
+        {isMember && recentProposals.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Recent proposals</h2>
